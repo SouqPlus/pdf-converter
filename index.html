@@ -71,13 +71,13 @@
             color: transparent;
         }
 
-        /* تعديل منطقة المعالجة لتعمل بدون إظهار مساحات بيضاء */
+        /* تعديل جذري لمنطقة المعالجة لضمان ظهور النص */
         #hiddenContent {
             position: absolute;
-            top: 0;
+            top: -9999px; /* وضعه بعيداً جداً للأعلى بدلاً من الشفافية */
             left: 0;
-            width: 190mm; /* عرض مناسب لـ A4 داخل الحاوية */
-            padding: 20px;
+            width: 170mm; /* عرض مناسب داخل صفحة A4 */
+            padding: 20mm;
             background: white;
             color: black;
             direction: rtl;
@@ -85,9 +85,7 @@
             white-space: pre-wrap;
             line-height: 1.6;
             font-size: 18px;
-            opacity: 0; /* جعلها شفافة تماماً لكي لا يراها المستخدم */
-            pointer-events: none; /* لكي لا تعيق الضغط على الأزرار */
-            z-index: -1;
+            font-family: 'Cairo', sans-serif;
         }
     </style>
 </head>
@@ -138,7 +136,7 @@
                     <i class="fa-solid fa-download text-indigo-400"></i> تحميل TXT
                 </button>
             </div>
-            <!-- المنطقة المخفية المصلحة (تم تغيير الـ CSS الخاص بها) -->
+            <!-- الحاوية المخفية المستخدمة للتحويل -->
             <div id="hiddenContent"></div>
         </div>
 
@@ -179,31 +177,33 @@
             document.getElementById('tabImage').className = !isText ? 'px-10 py-3 rounded-xl font-bold transition-all active-tab' : 'px-10 py-3 rounded-xl font-bold transition-all inactive-tab';
         }
 
-        function convertTextToPDF() {
+        async function convertTextToPDF() {
             const text = document.getElementById('textInput').value;
             if(!text.trim()) return alert("يرجى كتابة نص أولاً!");
             
             const ghost = document.getElementById('hiddenContent');
             ghost.innerText = text;
-            
-            // إصلاح: جعل العنصر مرئياً للمكتبة للحظة وبشفافية 1 لضمان الالتقاط
-            ghost.style.opacity = "1";
 
             const opt = {
-                margin: 15,
+                margin: 0,
                 filename: 'محول-ملف-.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false,
+                    letterRendering: true
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(ghost).save().then(() => {
+            try {
+                // الانتظار قليلاً لضمان رندر النص في الـ DOM
+                await html2pdf().set(opt).from(ghost).save();
                 ghost.innerText = "";
-                ghost.style.opacity = "0"; // إخفاؤه مرة أخرى بعد الانتهاء
-            }).catch(err => {
-                alert("حدث خطأ في التحويل، حاول مرة أخرى.");
-                ghost.style.opacity = "0";
-            });
+            } catch (err) {
+                alert("حدث خطأ أثناء إنشاء الملف. حاول مرة أخرى.");
+            }
         }
 
         function convertTextToTXT() {
