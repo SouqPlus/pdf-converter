@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- منع التكبير والتصغير وضبط العرض تلقائياً للجوال -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- ================= إعدادات SEO السحرية ================= -->
     <title>محول الملفات - تحويل الصور والنصوص الى PDF مجانا</title>
@@ -26,7 +27,11 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         
-        body {
+        /* حل مشكلة اللف يميناً والتكبير */
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+            touch-action: manipulation;
             font-family: 'Cairo', sans-serif;
             background-color: #f4f7fa;
             color: #334155;
@@ -68,13 +73,13 @@
             color: transparent;
         }
 
-        /* تحسين منطقة تحويل النص لضمان ظهور الأحرف العربية بشكل صحيح */
+        /* تعديل احترافي لمنطقة التحويل لضمان عدم ظهور مساحات بيضاء جانبية */
         #hiddenContent {
-            position: absolute;
-            left: -9999px;
+            position: fixed;
             top: 0;
-            width: 595px; /* عرض صفحة A4 تقريباً */
-            padding: 40px;
+            left: -200vw; /* إبعادها تماماً عن الشاشة لتجنب السحب الجانبي */
+            width: 210mm;
+            padding: 20mm;
             background: white;
             color: black;
             direction: rtl;
@@ -82,6 +87,7 @@
             white-space: pre-wrap;
             line-height: 1.6;
             font-size: 18px;
+            z-index: -9999;
         }
     </style>
 </head>
@@ -132,7 +138,7 @@
                     <i class="fa-solid fa-download text-indigo-400"></i> تحميل TXT
                 </button>
             </div>
-            <!-- Hidden area for PDF generation logic (Modified for Fix) -->
+            <!-- المنطقة المخفية المصلحة -->
             <div id="hiddenContent"></div>
         </div>
 
@@ -173,17 +179,16 @@
             document.getElementById('tabImage').className = !isText ? 'px-10 py-3 rounded-xl font-bold transition-all active-tab' : 'px-10 py-3 rounded-xl font-bold transition-all inactive-tab';
         }
 
-        // إصلاح تحويل النصوص للجوال
         function convertTextToPDF() {
             const text = document.getElementById('textInput').value;
             if(!text.trim()) return alert("يرجى كتابة نص أولاً!");
             
             const ghost = document.getElementById('hiddenContent');
-            ghost.innerText = text; // استخدام innerText لضمان سلامة الرموز العربية
+            ghost.innerText = text;
 
             const opt = {
                 margin: 15,
-                filename: 'محول-عزوز-الملكي.pdf',
+                filename: 'محول--ملف.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -201,7 +206,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "ملف-نصي-عزوز.txt";
+            a.download = "ملف-نصي-.txt";
             a.click();
         }
 
@@ -217,7 +222,6 @@
             }
         }
 
-        // إصلاح أبعاد الصور في الـ PDF للجوال
         function convertImageToPDF() {
             const src = document.getElementById('imgPreview').src;
             if(!src) return;
@@ -238,7 +242,6 @@
                 let width = img.width;
                 let height = img.height;
                 
-                // حساب النسبة لضمان عدم تمدد الصورة
                 const ratio = Math.min(maxWidth / width, maxHeight / height);
                 width = width * ratio;
                 height = height * ratio;
@@ -247,7 +250,7 @@
                 const y = (pageHeight - height) / 2;
 
                 doc.addImage(img, 'JPEG', x, y, width, height);
-                doc.save('صورة-محولة-عزوز.pdf');
+                doc.save('صورة-محولة-.pdf');
             };
         }
     </script>
