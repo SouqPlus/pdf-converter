@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- منع التكبير والتصغير وضبط العرض تلقائياً للجوال -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- ================= إعدادات SEO السحرية ================= -->
@@ -27,7 +26,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
         
-        /* حل مشكلة اللف يميناً والتكبير */
         html, body {
             max-width: 100%;
             overflow-x: hidden;
@@ -73,13 +71,13 @@
             color: transparent;
         }
 
-        /* تعديل احترافي لمنطقة التحويل لضمان عدم ظهور مساحات بيضاء جانبية */
+        /* تعديل منطقة المعالجة لتعمل بدون إظهار مساحات بيضاء */
         #hiddenContent {
-            position: fixed;
+            position: absolute;
             top: 0;
-            left: -200vw; /* إبعادها تماماً عن الشاشة لتجنب السحب الجانبي */
-            width: 210mm;
-            padding: 20mm;
+            left: 0;
+            width: 190mm; /* عرض مناسب لـ A4 داخل الحاوية */
+            padding: 20px;
             background: white;
             color: black;
             direction: rtl;
@@ -87,7 +85,9 @@
             white-space: pre-wrap;
             line-height: 1.6;
             font-size: 18px;
-            z-index: -9999;
+            opacity: 0; /* جعلها شفافة تماماً لكي لا يراها المستخدم */
+            pointer-events: none; /* لكي لا تعيق الضغط على الأزرار */
+            z-index: -1;
         }
     </style>
 </head>
@@ -138,7 +138,7 @@
                     <i class="fa-solid fa-download text-indigo-400"></i> تحميل TXT
                 </button>
             </div>
-            <!-- المنطقة المخفية المصلحة -->
+            <!-- المنطقة المخفية المصلحة (تم تغيير الـ CSS الخاص بها) -->
             <div id="hiddenContent"></div>
         </div>
 
@@ -185,17 +185,24 @@
             
             const ghost = document.getElementById('hiddenContent');
             ghost.innerText = text;
+            
+            // إصلاح: جعل العنصر مرئياً للمكتبة للحظة وبشفافية 1 لضمان الالتقاط
+            ghost.style.opacity = "1";
 
             const opt = {
                 margin: 15,
-                filename: 'محول--ملف.pdf',
+                filename: 'محول-ملف-.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(ghost).save().then(() => {
                 ghost.innerText = "";
+                ghost.style.opacity = "0"; // إخفاؤه مرة أخرى بعد الانتهاء
+            }).catch(err => {
+                alert("حدث خطأ في التحويل، حاول مرة أخرى.");
+                ghost.style.opacity = "0";
             });
         }
 
