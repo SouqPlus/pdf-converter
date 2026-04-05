@@ -63,7 +63,25 @@
         .gradient-text {
             background: linear-gradient(135deg, #4f46e5, #0ea5e9);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        /* تحسين منطقة تحويل النص لضمان ظهور الأحرف العربية بشكل صحيح */
+        #hiddenContent {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            width: 595px; /* عرض صفحة A4 تقريباً */
+            padding: 40px;
+            background: white;
+            color: black;
+            direction: rtl;
+            text-align: right;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -114,8 +132,8 @@
                     <i class="fa-solid fa-download text-indigo-400"></i> تحميل TXT
                 </button>
             </div>
-            <!-- Hidden area for PDF generation logic -->
-            <div id="hiddenContent" class="hidden p-10 bg-white text-right leading-loose text-2xl font-['Cairo']" style="width: 800px;"></div>
+            <!-- Hidden area for PDF generation logic (Modified for Fix) -->
+            <div id="hiddenContent"></div>
         </div>
 
         <!-- Section: Image To PDF -->
@@ -146,7 +164,6 @@
     </footer>
 
     <script>
-        // دالة التبديل بين الأقسام
         function switchSection(type) {
             const isText = type === 'text';
             document.getElementById('sectionText').classList.toggle('hidden', !isText);
@@ -156,25 +173,24 @@
             document.getElementById('tabImage').className = !isText ? 'px-10 py-3 rounded-xl font-bold transition-all active-tab' : 'px-10 py-3 rounded-xl font-bold transition-all inactive-tab';
         }
 
-        // --- دوال النصوص ---
+        // إصلاح تحويل النصوص للجوال
         function convertTextToPDF() {
             const text = document.getElementById('textInput').value;
             if(!text.trim()) return alert("يرجى كتابة نص أولاً!");
             
             const ghost = document.getElementById('hiddenContent');
-            ghost.innerHTML = text.replace(/\n/g, '<br>');
-            ghost.style.display = 'block';
+            ghost.innerText = text; // استخدام innerText لضمان سلامة الرموز العربية
 
             const opt = {
-                margin: 20,
+                margin: 15,
                 filename: 'محول-عزوز-الملكي.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(ghost).save().then(() => {
-                ghost.style.display = 'none';
+                ghost.innerText = "";
             });
         }
 
@@ -189,7 +205,6 @@
             a.click();
         }
 
-        // --- دوال الصور ---
         function previewImage(event) {
             const f = event.target.files[0];
             if (f) {
@@ -202,16 +217,36 @@
             }
         }
 
+        // إصلاح أبعاد الصور في الـ PDF للجوال
         function convertImageToPDF() {
             const src = document.getElementById('imgPreview').src;
+            if(!src) return;
+
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
             const img = new Image();
             img.src = src;
             img.onload = function() {
-                const w = doc.internal.pageSize.getWidth();
-                const h = (img.height * w) / img.width;
-                doc.addImage(img, 'JPEG', 0, 0, w, h);
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                
+                const margin = 10;
+                const maxWidth = pageWidth - (margin * 2);
+                const maxHeight = pageHeight - (margin * 2);
+                
+                let width = img.width;
+                let height = img.height;
+                
+                // حساب النسبة لضمان عدم تمدد الصورة
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width = width * ratio;
+                height = height * ratio;
+
+                const x = (pageWidth - width) / 2;
+                const y = (pageHeight - height) / 2;
+
+                doc.addImage(img, 'JPEG', x, y, width, height);
                 doc.save('صورة-محولة-عزوز.pdf');
             };
         }
